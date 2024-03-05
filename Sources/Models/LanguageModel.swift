@@ -61,7 +61,11 @@ public class LanguageModel {
 }
 
 public extension LanguageModel {
-    static func loadCompiled(url: URL, computeUnits: MLComputeUnits = .all) throws -> LanguageModel {
+    // .all
+    // .cpuAndGPU
+    // .cpuOnly
+    // .cpuAndNeuralEngine
+    static func loadCompiled(url: URL, computeUnits: MLComputeUnits = .cpuAndGPU) throws -> LanguageModel {
         let config = MLModelConfiguration()
         config.computeUnits = computeUnits
         let model = try MLModel(contentsOf: url, configuration: config)
