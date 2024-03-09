@@ -240,36 +240,40 @@ public extension LanguageModel {
     }
 }
 
-extension LanguageModel: Codable {
+public class LanguageModel: Codable {
+    // Existing class properties and methods...
+
+    // Codable conformance directly in the class definition
     private enum CodingKeys: String, CodingKey {
         case modelURL
         case minContextLength
         case maxContextLength
     }
-    
-    public init(from decoder: Decoder) throws {
+
+    required public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         let modelURLString = try container.decode(String.self, forKey: .modelURL)
         guard let modelURL = URL(string: modelURLString),
-              let loadedModel = try? MLModel(contentsOf: modelURL) else {
-            throw DecodingError.dataCorruptedError(forKey: .modelURL,
-                                                   in: container,
-                                                   debugDescription: "Cannot load MLModel from URL")
+            let loadedModel = try? MLModel(contentsOf: modelURL) else {
+                throw DecodingError.dataCorruptedError(forKey: .modelURL,
+                                                       in: container,
+                                                       debugDescription: "Cannot load MLModel from URL")
         }
         self.model = loadedModel
         self.minContextLength = try container.decode(Int.self, forKey: .minContextLength)
         self.maxContextLength = try container.decode(Int.self, forKey: .maxContextLength)
     }
-    
+
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(modelURL.absoluteString, forKey: .modelURL)
+        // Ensure there's a mechanism to retrieve the modelURL for encoding
+        let modelURLString = /* Your logic to obtain the model URL string */
+        try container.encode(modelURLString, forKey: .modelURL)
         try container.encode(minContextLength, forKey: .minContextLength)
         try container.encode(maxContextLength, forKey: .maxContextLength)
     }
-
-    // Note: Add `var modelURL: URL` to the class definition and ensure
-    // it is initialized properly when creating a `LanguageModel` instance.
+    
+    // The rest of your class implementation...
 }
 
 extension LanguageModel: TextGenerationModel {
