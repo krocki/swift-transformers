@@ -50,16 +50,16 @@ public class LanguageModel: Codable {
         case maxContextLength
     }
 
-    required public init(from decoder: Decoder) throws {
+    required public init(from decoder: Decoder) {
         // Access the container keyed by your CodingKeys enum
     //    let container = try decoder.container(keyedBy: CodingKeys.self)
     //    
     //    // Decode each property using the key that matches the enum case
     //    let modelURLString = try container.decode(String.self, forKey: .modelURL)
     //    // Attempt to construct the URL from the string and load the MLModel
-        guard let modelURL = URL(string: modelURLString), let loadedModel = try? MLModel(contentsOf: modelURL) else {
-            throw DecodingError.dataCorruptedError(forKey: .modelURL, in: container, debugDescription: "Cannot load MLModel from URL")
-        }
+        //guard let modelURL = URL(string: modelURLString), let loadedModel = try? MLModel(contentsOf: modelURL) else {
+        //    throw DecodingError.dataCorruptedError(forKey: .modelURL, in: container, debugDescription: "Cannot load MLModel from URL")
+        //}
     //    self.model = loadedModel
     //    
     //    // Decode the integer properties
