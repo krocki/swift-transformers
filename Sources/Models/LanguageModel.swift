@@ -24,6 +24,88 @@ func measureExecutionTime<T>(_ task: () throws -> T, completion: (T?) -> Void) {
     completion(result)
 }
 
+public class LanguageModel: Codable {
+
+    public let model: MLModel
+    
+    public let minContextLength: Int
+    public let maxContextLength: Int
+    
+    let input_ids = "input_ids"
+    let attention_mask = "attention_mask"
+    
+    struct Configurations {
+        var modelConfig: Config
+        var tokenizerConfig: Config?
+        var tokenizerData: Config
+    }
+    
+    private var configuration: LanguageModelConfigurationFromHub? = nil
+    private var _tokenizer: Tokenizer? = nil
+
+    // Codable conformance directly in the class definition
+    private enum CodingKeys: String, CodingKey {
+        case modelURL
+        case minContextLength
+        case maxContextLength
+    }
+
+    required public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        let modelURLString = try container.decode(String.self, forKey: .modelURL)
+        guard let modelURL = URL(string: modelURLString),
+            let loadedModel = try? MLModel(contentsOf: modelURL) else {
+                throw DecodingError.dataCorruptedError(forKey: .modelURL,
+                                                       in: container,
+                                                       debugDescription: "Cannot load MLModel from URL")
+        }
+        self.model = loadedModel
+        self.minContextLength = try container.decode(Int.self, forKey: .minContextLength)
+        self.maxContextLength = try container.decode(Int.self, forKey: .maxContextLength)
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        // Ensure there's a mechanism to retrieve the modelURL for encoding
+        let modelURLString = /* Your logic to obtain the model URL string */
+        try container.encode(modelURLString, forKey: .modelURL)
+        try container.encode(minContextLength, forKey: .minContextLength)
+        try container.encode(maxContextLength, forKey: .maxContextLength)
+    }
+    
+    public required init(model: MLModel) {
+        self.model = model
+        
+        // We assume inputs named "input_ids" with shape (1, seq_length)
+        // Perhaps we should convert to vectors of shape (seq_length) and use sequenceConstraint instead of shapeConstraint
+        let inputDescription = model.modelDescription.inputDescriptionsByName["input_ids"]
+        
+        guard let shapeConstraint = inputDescription?.multiArrayConstraint?.shapeConstraint else {
+            fatalError("Cannot obtain shape information")
+        }
+        
+        switch shapeConstraint.type {
+        case .enumerated:
+            // TODO: support a set of fixed shapes (keeping the first one here)
+            minContextLength = shapeConstraint.enumeratedShapes[0][1].intValue
+            maxContextLength = minContextLength
+        case .range:
+            let range = inputDescription?.multiArrayConstraint?.shapeConstraint.sizeRangeForDimension[1] as? NSRange
+            minContextLength = range?.location ?? 1
+            maxContextLength = range?.length ?? 128
+        case .unspecified:
+            minContextLength = 128
+            maxContextLength = 128
+        @unknown default:
+            minContextLength = 128
+            maxContextLength = 128
+        }
+                
+        self.configuration = LanguageModelConfigurationFromHub(modelName: modelName)
+    }
+// The rest of your class implementation...
+}
+
 public extension LanguageModel {
     // .all
     // .cpuAndGPU
@@ -188,42 +270,6 @@ public extension LanguageModel {
             return _tokenizer!
         }
     }
-}
-
-public class LanguageModel: Codable {
-    // Existing class properties and methods...
-
-    // Codable conformance directly in the class definition
-    private enum CodingKeys: String, CodingKey {
-        case modelURL
-        case minContextLength
-        case maxContextLength
-    }
-
-    required public init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        let modelURLString = try container.decode(String.self, forKey: .modelURL)
-        guard let modelURL = URL(string: modelURLString),
-            let loadedModel = try? MLModel(contentsOf: modelURL) else {
-                throw DecodingError.dataCorruptedError(forKey: .modelURL,
-                                                       in: container,
-                                                       debugDescription: "Cannot load MLModel from URL")
-        }
-        self.model = loadedModel
-        self.minContextLength = try container.decode(Int.self, forKey: .minContextLength)
-        self.maxContextLength = try container.decode(Int.self, forKey: .maxContextLength)
-    }
-
-    public func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-        // Ensure there's a mechanism to retrieve the modelURL for encoding
-        let modelURLString = /* Your logic to obtain the model URL string */
-        try container.encode(modelURLString, forKey: .modelURL)
-        try container.encode(minContextLength, forKey: .minContextLength)
-        try container.encode(maxContextLength, forKey: .maxContextLength)
-    }
-    
-    // The rest of your class implementation...
 }
 
 extension LanguageModel: TextGenerationModel {
