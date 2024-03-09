@@ -24,56 +24,6 @@ func measureExecutionTime<T>(_ task: () throws -> T, completion: (T?) -> Void) {
     completion(result)
 }
 
-public class LanguageModel {
-    public let model: MLModel
-    
-    public let minContextLength: Int
-    public let maxContextLength: Int
-    
-    let input_ids = "input_ids"
-    let attention_mask = "attention_mask"
-    
-    struct Configurations {
-        var modelConfig: Config
-        var tokenizerConfig: Config?
-        var tokenizerData: Config
-    }
-    
-    private var configuration: LanguageModelConfigurationFromHub? = nil
-    private var _tokenizer: Tokenizer? = nil
-
-    public required init(model: MLModel) {
-        self.model = model
-        
-        // We assume inputs named "input_ids" with shape (1, seq_length)
-        // Perhaps we should convert to vectors of shape (seq_length) and use sequenceConstraint instead of shapeConstraint
-        let inputDescription = model.modelDescription.inputDescriptionsByName["input_ids"]
-        
-        guard let shapeConstraint = inputDescription?.multiArrayConstraint?.shapeConstraint else {
-            fatalError("Cannot obtain shape information")
-        }
-        
-        switch shapeConstraint.type {
-        case .enumerated:
-            // TODO: support a set of fixed shapes (keeping the first one here)
-            minContextLength = shapeConstraint.enumeratedShapes[0][1].intValue
-            maxContextLength = minContextLength
-        case .range:
-            let range = inputDescription?.multiArrayConstraint?.shapeConstraint.sizeRangeForDimension[1] as? NSRange
-            minContextLength = range?.location ?? 1
-            maxContextLength = range?.length ?? 128
-        case .unspecified:
-            minContextLength = 128
-            maxContextLength = 128
-        @unknown default:
-            minContextLength = 128
-            maxContextLength = 128
-        }
-                
-        self.configuration = LanguageModelConfigurationFromHub(modelName: modelName)
-    }
-}
-
 public extension LanguageModel {
     // .all
     // .cpuAndGPU
