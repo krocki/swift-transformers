@@ -64,7 +64,11 @@ public extension LanguageModel {
     static func loadCompiled(url: URL, computeUnits: MLComputeUnits = .all) throws -> LanguageModel {
         let config = MLModelConfiguration()
         config.computeUnits = computeUnits
+        let startTime = CFAbsoluteTimeGetCurrent()
         let model = try MLModel(contentsOf: url, configuration: config)
+        let executionTime = CFAbsoluteTimeGetCurrent() - startTime
+        let consoleText = "Execution of \(#function) took \(executionTime) seconds.\n"
+        print(consoleText)
         return LanguageModel(model: model)
     }
 }
