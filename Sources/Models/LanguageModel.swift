@@ -64,10 +64,10 @@ public class LanguageModel: Codable {
         self.maxContextLength = try container.decode(Int.self, forKey: .maxContextLength)
     }
 
-    public func encode(to encoder: Encoder) throws {
+    public func encode(to encoder: Encoder, modelURLString: String) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         // Ensure there's a mechanism to retrieve the modelURL for encoding
-        let modelURLString = /* Your logic to obtain the model URL string */
+        //let modelURLString = /* Your logic to obtain the model URL string */
         try container.encode(modelURLString, forKey: .modelURL)
         try container.encode(minContextLength, forKey: .minContextLength)
         try container.encode(maxContextLength, forKey: .maxContextLength)
