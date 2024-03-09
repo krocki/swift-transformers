@@ -240,6 +240,38 @@ public extension LanguageModel {
     }
 }
 
+extension LanguageModel: Codable {
+    private enum CodingKeys: String, CodingKey {
+        case modelURL
+        case minContextLength
+        case maxContextLength
+    }
+    
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        let modelURLString = try container.decode(String.self, forKey: .modelURL)
+        guard let modelURL = URL(string: modelURLString),
+              let loadedModel = try? MLModel(contentsOf: modelURL) else {
+            throw DecodingError.dataCorruptedError(forKey: .modelURL,
+                                                   in: container,
+                                                   debugDescription: "Cannot load MLModel from URL")
+        }
+        self.model = loadedModel
+        self.minContextLength = try container.decode(Int.self, forKey: .minContextLength)
+        self.maxContextLength = try container.decode(Int.self, forKey: .maxContextLength)
+    }
+    
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(modelURL.absoluteString, forKey: .modelURL)
+        try container.encode(minContextLength, forKey: .minContextLength)
+        try container.encode(maxContextLength, forKey: .maxContextLength)
+    }
+
+    // Note: Add `var modelURL: URL` to the class definition and ensure
+    // it is initialized properly when creating a `LanguageModel` instance.
+}
+
 extension LanguageModel: TextGenerationModel {
     //TODO: retrieve from the json: https://huggingface.co/nlpcloud/instruct-gpt-j-fp16/blob/main/config.json#L26
     public var defaultGenerationConfig: GenerationConfig {
