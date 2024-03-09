@@ -24,7 +24,7 @@ func measureExecutionTime<T>(_ task: () throws -> T, completion: (T?) -> Void) {
     completion(result)
 }
 
-public class LanguageModel: Codable, Decodable {
+public class LanguageModel: Codable {
 
     public let model: MLModel
     
@@ -50,19 +50,22 @@ public class LanguageModel: Codable, Decodable {
         case maxContextLength
     }
 
-    required public init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        let modelURLString = try container.decode(String.self, forKey: .modelURL)
-        guard let modelURL = URL(string: modelURLString),
-            let loadedModel = try? MLModel(contentsOf: modelURL) else {
-                throw DecodingError.dataCorruptedError(forKey: .modelURL,
-                                                       in: container,
-                                                       debugDescription: "Cannot load MLModel from URL")
-        }
-        self.model = loadedModel
-        self.minContextLength = try container.decode(Int.self, forKey: .minContextLength)
-        self.maxContextLength = try container.decode(Int.self, forKey: .maxContextLength)
+required public init(from decoder: Decoder) throws {
+    // Access the container keyed by your CodingKeys enum
+    let container = try decoder.container(keyedBy: CodingKeys.self)
+    
+    // Decode each property using the key that matches the enum case
+    let modelURLString = try container.decode(String.self, forKey: .modelURL)
+    // Attempt to construct the URL from the string and load the MLModel
+    guard let modelURL = URL(string: modelURLString), let loadedModel = try? MLModel(contentsOf: modelURL) else {
+        throw DecodingError.dataCorruptedError(forKey: .modelURL, in: container, debugDescription: "Cannot load MLModel from URL")
     }
+    self.model = loadedModel
+    
+    // Decode the integer properties
+    self.minContextLength = try container.decode(Int.self, forKey: .minContextLength)
+    self.maxContextLength = try container.decode(Int.self, forKey: .maxContextLength)
+}
 
     public func encode(to encoder: Encoder, modelURLString: String) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
