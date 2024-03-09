@@ -24,7 +24,7 @@ func measureExecutionTime<T>(_ task: () throws -> T, completion: (T?) -> Void) {
     completion(result)
 }
 
-public class LanguageModel: Codable {
+public class LanguageModel: Codable, Decodable {
 
     public let model: MLModel
     
