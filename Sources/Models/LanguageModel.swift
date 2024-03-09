@@ -85,7 +85,7 @@ public extension LanguageModel {
         let startTime = CFAbsoluteTimeGetCurrent()
         let model = try MLModel(contentsOf: url, configuration: config)
         let executionTime = CFAbsoluteTimeGetCurrent() - startTime
-        consoleText = "Execution of \(#function) took \(executionTime) seconds.\n"
+        let consoleText = "Execution of \(#function) took \(executionTime) seconds.\n"
         print(consoleText)
         return LanguageModel(model: model)
     }
@@ -233,7 +233,7 @@ public extension LanguageModel {
             let tokenizerData = try await tokenizerData
             _tokenizer = try AutoTokenizer.from(tokenizerConfig: tokenizerConfig, tokenizerData: tokenizerData)
             let executionTime = CFAbsoluteTimeGetCurrent() - startTime
-            consoleText = "Execution of \(#function) took \(executionTime) seconds.\n"
+            let consoleText = "Execution of \(#function) took \(executionTime) seconds.\n"
             print(consoleText)
             return _tokenizer!
         }
