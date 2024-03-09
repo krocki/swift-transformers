@@ -10,22 +10,7 @@ import Tokenizers
 import Generation
 import Hub
 
-func measureExecutionTime<T>(_ task: () throws -> T, completion: (T?) -> Void) {
-    let startTime = CFAbsoluteTimeGetCurrent()
-    let result: T?
-    do {
-        result = try task()
-    } catch {
-        print("Error during execution: \(error)")
-        result = nil
-    }
-    let endTime = CFAbsoluteTimeGetCurrent()
-    print("Execution took \(endTime - startTime) seconds")
-    completion(result)
-}
-
-public class LanguageModel: Codable {
-
+public class LanguageModel {
     public let model: MLModel
     
     public let minContextLength: Int
@@ -43,39 +28,6 @@ public class LanguageModel: Codable {
     private var configuration: LanguageModelConfigurationFromHub? = nil
     private var _tokenizer: Tokenizer? = nil
 
-    // Codable conformance directly in the class definition
-    private enum CodingKeys: String, CodingKey {
-        case modelURL
-        case minContextLength
-        case maxContextLength
-    }
-
-    required public init(from decoder: Decoder) {
-        // Access the container keyed by your CodingKeys enum
-    //    let container = try decoder.container(keyedBy: CodingKeys.self)
-    //    
-    //    // Decode each property using the key that matches the enum case
-    //    let modelURLString = try container.decode(String.self, forKey: .modelURL)
-    //    // Attempt to construct the URL from the string and load the MLModel
-        //guard let modelURL = URL(string: modelURLString), let loadedModel = try? MLModel(contentsOf: modelURL) else {
-        //    throw DecodingError.dataCorruptedError(forKey: .modelURL, in: container, debugDescription: "Cannot load MLModel from URL")
-        //}
-    //    self.model = loadedModel
-    //    
-    //    // Decode the integer properties
-    //    self.minContextLength = try container.decode(Int.self, forKey: .minContextLength)
-    //    self.maxContextLength = try container.decode(Int.self, forKey: .maxContextLength)
-    }
-
-    public func encode(to encoder: Encoder, modelURLString: String) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-        // Ensure there's a mechanism to retrieve the modelURL for encoding
-        //let modelURLString = /* Your logic to obtain the model URL string */
-        try container.encode(modelURLString, forKey: .modelURL)
-        try container.encode(minContextLength, forKey: .minContextLength)
-        try container.encode(maxContextLength, forKey: .maxContextLength)
-    }
-    
     public required init(model: MLModel) {
         self.model = model
         
@@ -106,22 +58,13 @@ public class LanguageModel: Codable {
                 
         self.configuration = LanguageModelConfigurationFromHub(modelName: modelName)
     }
-// The rest of your class implementation...
 }
 
 public extension LanguageModel {
-    // .all
-    // .cpuAndGPU
-    // .cpuOnly
-    // .cpuAndNeuralEngine
     static func loadCompiled(url: URL, computeUnits: MLComputeUnits = .all) throws -> LanguageModel {
         let config = MLModelConfiguration()
         config.computeUnits = computeUnits
-        let startTime = CFAbsoluteTimeGetCurrent()
         let model = try MLModel(contentsOf: url, configuration: config)
-        let executionTime = CFAbsoluteTimeGetCurrent() - startTime
-        let consoleText = "Execution of \(#function) took \(executionTime) seconds.\n"
-        print(consoleText)
         return LanguageModel(model: model)
     }
 }
@@ -262,14 +205,10 @@ public extension LanguageModel {
     
     var tokenizer: Tokenizer {
         get async throws {
-        let startTime = CFAbsoluteTimeGetCurrent()
             guard _tokenizer == nil else { return _tokenizer! }
             guard let tokenizerConfig = try await tokenizerConfig else { throw "Cannot retrieve Tokenizer configuration" }
             let tokenizerData = try await tokenizerData
             _tokenizer = try AutoTokenizer.from(tokenizerConfig: tokenizerConfig, tokenizerData: tokenizerData)
-            let executionTime = CFAbsoluteTimeGetCurrent() - startTime
-            let consoleText = "Execution of \(#function) took \(executionTime) seconds.\n"
-            print(consoleText)
             return _tokenizer!
         }
     }
@@ -290,3 +229,4 @@ extension LanguageModel: TextGenerationModel {
 }
 
 extension String: Error {}
+
