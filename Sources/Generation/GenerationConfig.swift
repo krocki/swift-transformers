@@ -9,22 +9,22 @@ import Foundation
 
 /// Essentials taken from https://github.com/huggingface/transformers/blob/main/src/transformers/generation/configuration_utils.py
 public struct GenerationConfig {
-    public var maxLength = 20
+    public var maxLength = 32
     public var maxNewTokens: Int
-    public var doSample = false
+    public var doSample = true
     public var numBeams = 1
     public var numBeamGroups = 1
     public var penaltyAlpha: Double? = nil
-    public var temperature = 1.0
+    public var temperature = 0.9
     public var topK = 50
-    public var topP = 1.0
+    public var topP = 0.9
     public var repetitionPenalty = 1.0
     
     public var padTokenId: Int? = nil
     public var bosTokenId: Int? = nil
     public var eosTokenId: Int? = nil
     
-    public init(maxLength: Int = 20, maxNewTokens: Int, doSample: Bool = false, numBeams: Int = 1, numBeamGroups: Int = 1, penaltyAlpha: Double? = nil, temperature: Double = 1.0, topK: Int = 50, topP: Double = 1.0, repetitionPenalty: Double = 1.0) {
+    public init(maxLength: Int = 32, maxNewTokens: Int, doSample: Bool = true, numBeams: Int = 1, numBeamGroups: Int = 1, penaltyAlpha: Double? = nil, temperature: Double = 0.9, topK: Int = 50, topP: Double = 0.9, repetitionPenalty: Double = 1.0) {
         self.maxLength = maxLength
         self.maxNewTokens = maxNewTokens
         self.doSample = doSample
@@ -44,7 +44,7 @@ public extension GenerationConfig {
         if topK > 1 && !doSample && penaltyAlpha != nil && penaltyAlpha! > 0 {
             return .contrastiveSearch
         }
-        
+
         switch (numBeams, numBeamGroups, doSample) {
         case (1, 1, false)   : return .greedy
         case (1, 1, true)    : return .sample

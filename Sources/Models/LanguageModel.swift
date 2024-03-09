@@ -10,6 +10,20 @@ import Tokenizers
 import Generation
 import Hub
 
+func measureExecutionTime<T>(_ task: () throws -> T, completion: (T?) -> Void) {
+    let startTime = CFAbsoluteTimeGetCurrent()
+    let result: T?
+    do {
+        result = try task()
+    } catch {
+        print("Error during execution: \(error)")
+        result = nil
+    }
+    let endTime = CFAbsoluteTimeGetCurrent()
+    print("Execution took \(endTime - startTime) seconds")
+    completion(result)
+}
+
 public class LanguageModel {
     public let model: MLModel
     
@@ -65,10 +79,14 @@ public extension LanguageModel {
     // .cpuAndGPU
     // .cpuOnly
     // .cpuAndNeuralEngine
-    static func loadCompiled(url: URL, computeUnits: MLComputeUnits = .cpuAndGPU) throws -> LanguageModel {
+    static func loadCompiled(url: URL, computeUnits: MLComputeUnits = .all) throws -> LanguageModel {
         let config = MLModelConfiguration()
         config.computeUnits = computeUnits
+        let startTime = CFAbsoluteTimeGetCurrent()
         let model = try MLModel(contentsOf: url, configuration: config)
+        let executionTime = CFAbsoluteTimeGetCurrent() - startTime
+        consoleText = "Execution of \(#function) took \(executionTime) seconds.\n"
+        print(consoleText)
         return LanguageModel(model: model)
     }
 }
@@ -209,10 +227,14 @@ public extension LanguageModel {
     
     var tokenizer: Tokenizer {
         get async throws {
+        let startTime = CFAbsoluteTimeGetCurrent()
             guard _tokenizer == nil else { return _tokenizer! }
             guard let tokenizerConfig = try await tokenizerConfig else { throw "Cannot retrieve Tokenizer configuration" }
             let tokenizerData = try await tokenizerData
             _tokenizer = try AutoTokenizer.from(tokenizerConfig: tokenizerConfig, tokenizerData: tokenizerData)
+            let executionTime = CFAbsoluteTimeGetCurrent() - startTime
+            consoleText = "Execution of \(#function) took \(executionTime) seconds.\n"
+            print(consoleText)
             return _tokenizer!
         }
     }
